@@ -1,0 +1,6 @@
+> Android GPS test 
+
+API 15 : Android 4.0.3 (IceCreamSandwich)
+
+- references
+http://www.fun25.co.kr/blog/android-simple-gps-example/ - 안드로이드 gps 예제
