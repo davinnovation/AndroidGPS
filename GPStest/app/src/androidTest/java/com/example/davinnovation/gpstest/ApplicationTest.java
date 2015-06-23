@@ -1,4 +1,4 @@
-package com.example.davinnovation.gpsandroid;
+package com.example.davinnovation.gpstest;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
