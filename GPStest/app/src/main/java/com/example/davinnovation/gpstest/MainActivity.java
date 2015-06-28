@@ -1,80 +1,47 @@
 package com.example.davinnovation.gpstest;
 
 import android.content.Context;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Button;
-
 
 public class MainActivity extends ActionBarActivity {
 
-    boolean isGPSEnabled,isNetworkEnabled;
+    TextView mTextNow;
+    TextView mTextStats;
+    LocationManager mLocMgr;
+    Button mbtnNow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //Button
-        findViewById(R.id.GetGPS_button).setOnClickListener(gpsButtonclick);
+        mTextNow = (TextView)findViewById(R.id.textNow);
+        mTextStats = (TextView)findViewById(R.id.textState);
+        mbtnNow = (Button)findViewById(R.id.btnNow);
 
-        //GPS
-        LocationManager locationmanager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        isGPSEnabled = locationmanager.isProviderEnabled(LocationManager.GPS_PROVIDER); //GPS provider check
-        isNetworkEnabled = locationmanager.isProviderEnabled(LocationManager.NETWORK_PROVIDER); // Network provider check
+        mLocMgr = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 
-        LocationListener locationListener = new LocationListener() {
+        mbtnNow.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onLocationChanged(Location location) {
-                double lat = location.getLatitude();
-                double lng = location.getLongitude();
-
-                Log.d("GPS","latitude: " + lat + ", longitude: " + lng);
+            public void onClick(View v) {
+                // String locProv = mLocMgr.getBestProvider(getCriteria(),true);
+                //mLocMgr.requestLocationUpdates(locProv, 3000, 3, mLocListener);
+                mLocMgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 3, mLocListener);
+                mLocMgr.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000, 3, mLocListener);
             }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-                Log.d("GPS","onstatusChanged");
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-                Log.d("GPS","onProviderEnabled");
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-                Log.d("GPS","onProviderDisabled");
-            }
-        };
-
-        locationmanager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
-        locationmanager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-
-        String locationProvider = locationmanager.GPS_PROVIDER;
-        Location lastKnownLocation = locationmanager.getLastKnownLocation(locationProvider);
-        if (lastKnownLocation != null)
-        {
-            double lng = lastKnownLocation.getLongitude();
-            double lat = lastKnownLocation.getLatitude();
-
-            Log.d("GPS","latitude: " + lat + ", longitude: " + lng);
-        }
+        });
     }
-
-    Button.OnClickListener gpsButtonclick = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-
-        }
-    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -83,18 +50,57 @@ public class MainActivity extends ActionBarActivity {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    LocationListener mLocListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            mTextNow.setText("Lat: " + location.getLatitude() + "\nLng: " +  location.getLongitude() + "\nAlt: " +  location.getAltitude());
         }
 
-        return super.onOptionsItemSelected(item);
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            switch (status) {
+                case LocationProvider.OUT_OF_SERVICE:
+                    mTextStats.setText("Provider out of service");break;
+                case LocationProvider.TEMPORARILY_UNAVAILABLE:
+                    mTextStats.setText("Provider Temporarily Unavailabe");break;
+                case LocationProvider.AVAILABLE:
+                    mTextStats.setText("Provider Available");break;
+            }
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+            mTextStats.setText("Provider Enabled");
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            mTextStats.setText("Provider Disabled");
+        }
+    };
+
+    public static  Criteria getCriteria() {
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setAltitudeRequired(true);
+        criteria.setBearingRequired(true);
+        criteria.setSpeedRequired(true);
+        criteria.setCostAllowed(true);
+        criteria.setPowerRequirement(Criteria.POWER_HIGH);
+        return criteria;
+    }
+
+    public void onResume(){
+        super.onResume();
+        // String locProv = mLocMgr.getBestProvider(getCriteria(),true);
+        //mLocMgr.requestLocationUpdates(locProv, 3000, 3, mLocListener);
+        mLocMgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 3, mLocListener);
+        mLocMgr.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000, 3, mLocListener);
+    }
+
+    public void onPause() {
+        super.onPause();
+        mLocMgr.removeUpdates(mLocListener);
+        mTextStats.setText("Location Service Stop");
     }
 }
